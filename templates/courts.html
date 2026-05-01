@@ -1,0 +1,544 @@
+{% extends "base.html" %}
+{% block title %}Courts & Sessions — CourtHub{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between items-center">
+  <div>
+    <h1>COURTS <span>&</span> SESSIONS</h1>
+    <p>Manage basketball courts and track session bookings</p>
+  </div>
+</div>
+
+<div class="tabs" id="main-tabs">
+  <button class="tab active">🏀  Courts</button>
+  <button class="tab">📋  Sessions</button>
+  <button class="tab">👤  Players</button>
+</div>
+
+<!-- ═══════════════ COURTS TAB ═══════════════ -->
+<div class="tab-panel active" id="panel-courts">
+  <div class="flex justify-between items-center mb-4">
+    <span class="text-muted text-sm" id="courts-count"></span>
+    <button class="btn btn-primary" onclick="openCourtModal()">+ Add Court</button>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table id="courts-table">
+        <thead>
+          <tr>
+            <th>Court Name</th>
+            <th>Location</th>
+            <th>Type</th>
+            <th>Max Players</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="courts-body">
+          <tr><td colspan="5"><div class="empty-state"><div class="icon">⏳</div>Loading...</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ SESSIONS TAB ═══════════════ -->
+<div class="tab-panel" id="panel-sessions">
+  <div class="flex justify-between items-center mb-4">
+    <span class="text-muted text-sm" id="sessions-count"></span>
+    <button class="btn btn-primary" onclick="openSessionModal()">+ Add Session</button>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table id="sessions-table">
+        <thead>
+          <tr>
+            <th>Court</th>
+            <th>Date</th>
+            <th>Start</th>
+            <th>Duration</th>
+            <th>Type</th>
+            <th>Players</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="sessions-body">
+          <tr><td colspan="7"><div class="empty-state"><div class="icon">⏳</div>Loading...</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+<div class="tab-panel" id="panel-players">
+  <div class="flex justify-between items-center mb-4">
+    <span class="text-muted text-sm" id="players-count"></span>
+    <button class="btn btn-primary" onclick="openPlayerModal()">+ Add Player</button>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table id="players-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Age</th>
+            <th>Skill Level</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="players-body">
+          <tr><td colspan="5"><div class="empty-state"><div class="icon">⏳</div>Loading...</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PLAYER MODAL ═══════════════ -->
+<div class="modal-overlay" id="player-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="player-modal-title">ADD PLAYER</span>
+      <button class="modal-close" onclick="closeModal('player-modal')">✕</button>
+    </div>
+    <input type="hidden" id="player-id"/>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="player-name" placeholder="e.g. Marcus Johnson"/>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="player-email" placeholder="e.g. marcus@email.com"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Age</label>
+        <input type="number" id="player-age" min="10" max="80" placeholder="e.g. 24"/>
+      </div>
+      <div class="form-group">
+        <label>Skill Level</label>
+        <select id="player-skill">
+          <option value="Beginner">Beginner</option>
+          <option value="Intermediate">Intermediate</option>
+          <option value="Advanced">Advanced</option>
+          <option value="Pro">Pro</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('player-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePlayer()">Save Player</button>
+    </div>
+  </div>
+</div>
+
+<!-- court modal-->
+<div class="modal-overlay" id="court-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="court-modal-title">ADD COURT</span>
+      <button class="modal-close" onclick="closeModal('court-modal')">✕</button>
+    </div>
+    <input type="hidden" id="court-id"/>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Court Name</label>
+        <input type="text" id="court-name" placeholder="e.g. Court A"/>
+      </div>
+      <div class="form-group">
+        <label>Location</label>
+        <input type="text" id="court-location" placeholder="e.g. Main Gym - North"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Type</label>
+        <select id="court-indoor">
+          <option value="1">Indoor</option>
+          <option value="0">Outdoor</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Max Players</label>
+        <input type="number" id="court-max" min="2" max="20" value="10"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('court-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCourt()">Save Court</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-overlay" id="session-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="session-modal-title">ADD SESSION</span>
+      <button class="modal-close" onclick="closeModal('session-modal')">✕</button>
+    </div>
+    <input type="hidden" id="session-id"/>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Court</label>
+        <!-- Populated dynamically from DB -->
+        <select id="session-court"></select>
+      </div>
+      <div class="form-group">
+        <label>Game Type</label>
+        <select id="session-gametype">
+          <option value="Pickup">Pickup</option>
+          <option value="League">League</option>
+          <option value="Practice">Practice</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="session-date"/>
+      </div>
+      <div class="form-group">
+        <label>Start Time</label>
+        <input type="time" id="session-time"/>
+      </div>
+      <div class="form-group">
+        <label>Duration (min)</label>
+        <input type="number" id="session-duration" min="15" step="15" value="60"/>
+      </div>
+    </div>
+    <div class="form-group mb-4">
+      <label>Players (hold Ctrl/⌘ to select multiple)</label>
+      <!-- Populated dynamically from DB -->
+      <select id="session-players" multiple></select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('session-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSession()">Save Session</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let courts  = [];
+  let players = [];
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    initTabs(document.getElementById('main-tabs').parentElement);
+    loadCourts();
+    loadSessions();
+    loadPlayers();
+  });
+
+  // ── Modals ────────────────────────────────────────────────────────────────
+  function openModal(id)  { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  document.querySelectorAll('.modal-overlay').forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+  });
+
+  // courts
+
+  async function loadCourts() {
+    const res  = await fetch('/api/courts');
+    courts = await res.json();
+    const tbody = document.getElementById('courts-body');
+    document.getElementById('courts-count').textContent = `${courts.length} courts`;
+
+    if (!courts.length) {
+      tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="icon">🏀</div>No courts yet</div></td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = courts.map(c => `
+      <tr>
+        <td><strong>${esc(c.name)}</strong></td>
+        <td class="text-muted">${esc(c.location)}</td>
+        <td><span class="badge ${c.indoor ? 'badge-indoor' : 'badge-outdoor'}">${c.indoor ? 'Indoor' : 'Outdoor'}</span></td>
+        <td class="font-mono">${c.max_players}</td>
+        <td>
+          <div class="flex gap-2">
+            <button class="btn btn-ghost btn-sm" onclick="editCourt(${c.court_id})">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteCourt(${c.court_id}, '${esc(c.name)}')">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+    // refresh court dropdown
+    populateCourtDropdown();
+  }
+
+  function openCourtModal(court = null) {
+    document.getElementById('court-modal-title').textContent = court ? 'EDIT COURT' : 'ADD COURT';
+    document.getElementById('court-id').value        = court ? court.court_id : '';
+    document.getElementById('court-name').value      = court ? court.name : '';
+    document.getElementById('court-location').value  = court ? court.location : '';
+    document.getElementById('court-indoor').value    = court ? court.indoor : '1';
+    document.getElementById('court-max').value       = court ? court.max_players : '10';
+    openModal('court-modal');
+  }
+
+  function editCourt(id) {
+    openCourtModal(courts.find(c => c.court_id === id));
+  }
+
+  async function saveCourt() {
+    const id       = document.getElementById('court-id').value;
+    const payload  = {
+      name:        document.getElementById('court-name').value.trim(),
+      location:    document.getElementById('court-location').value.trim(),
+      indoor:      document.getElementById('court-indoor').value,
+      max_players: document.getElementById('court-max').value,
+    };
+    const url    = id ? `/api/courts/${id}` : '/api/courts';
+    const method = id ? 'PUT' : 'POST';
+    const res    = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const data   = await res.json();
+    if (!res.ok) { toast(data.error, 'error'); return; }
+    closeModal('court-modal');
+    toast(id ? 'Court updated!' : 'Court added!');
+    loadCourts();
+  }
+
+  async function deleteCourt(id, name) {
+    if (!confirm(`Delete "${name}"? All sessions on this court will also be removed.`)) return;
+    const res = await fetch(`/api/courts/${id}`, { method: 'DELETE' });
+    if (res.ok) { toast('Court deleted'); loadCourts(); loadSessions(); }
+    else toast('Delete failed', 'error');
+  }
+  // players
+  async function loadPlayersTab() {
+  const res = await fetch('/api/players');
+  players   = await res.json();
+  const tbody = document.getElementById('players-body');
+  document.getElementById('players-count').textContent = `${players.length} players`;
+
+  if (!players.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="icon">👤</div>No players yet</div></td></tr>`;
+    return;
+  }
+
+  const skillColor = { Beginner: 'badge-pickup', Intermediate: 'badge-practice', Advanced: 'badge-league', Pro: 'badge-indoor' };
+
+  tbody.innerHTML = players.map(p => `
+    <tr>
+      <td><strong>${esc(p.name)}</strong></td>
+      <td class="text-muted font-mono text-sm">${esc(p.email)}</td>
+      <td class="font-mono">${p.age ?? '—'}</td>
+      <td><span class="badge ${skillColor[p.skill_level] || ''}">${esc(p.skill_level)}</span></td>
+      <td>
+        <div class="flex gap-2">
+          <button class="btn btn-ghost btn-sm" onclick="editPlayer(${p.player_id})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deletePlayer(${p.player_id}, '${esc(p.name)}')">Delete</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+
+  loadPlayers(); // refresh the session modal dropdown too
+}
+
+function openPlayerModal(player = null) {
+  document.getElementById('player-modal-title').textContent = player ? 'EDIT PLAYER' : 'ADD PLAYER';
+  document.getElementById('player-id').value    = player ? player.player_id : '';
+  document.getElementById('player-name').value  = player ? player.name : '';
+  document.getElementById('player-email').value = player ? player.email : '';
+  document.getElementById('player-age').value   = player ? player.age : '';
+  document.getElementById('player-skill').value = player ? player.skill_level : 'Beginner';
+  openModal('player-modal');
+}
+
+function editPlayer(id) {
+  openPlayerModal(players.find(p => p.player_id === id));
+}
+
+async function savePlayer() {
+  const id      = document.getElementById('player-id').value;
+  const payload = {
+    name:        document.getElementById('player-name').value.trim(),
+    email:       document.getElementById('player-email').value.trim(),
+    age:         document.getElementById('player-age').value || null,
+    skill_level: document.getElementById('player-skill').value,
+  };
+  const url    = id ? `/api/players/${id}` : '/api/players';
+  const method = id ? 'PUT' : 'POST';
+  const res    = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+  const data   = await res.json();
+  if (!res.ok) { toast(data.error, 'error'); return; }
+  closeModal('player-modal');
+  toast(id ? 'Player updated!' : 'Player added!');
+  loadPlayersTab();
+}
+
+async function deletePlayer(id, name) {
+  if (!confirm(`Delete "${name}"? They will be removed from all sessions.`)) return;
+  const res = await fetch(`/api/players/${id}`, { method: 'DELETE' });
+  if (res.ok) { toast('Player deleted'); loadPlayersTab(); loadSessions(); }
+  else toast('Delete failed', 'error');
+}
+  // sessions
+
+  async function loadSessions() {
+    const res      = await fetch('/api/sessions');
+    const sessions = await res.json();
+    const tbody    = document.getElementById('sessions-body');
+    document.getElementById('sessions-count').textContent = `${sessions.length} sessions`;
+
+    if (!sessions.length) {
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="icon">📋</div>No sessions yet</div></td></tr>`;
+      return;
+    }
+
+    const typeClass = { Pickup: 'badge-pickup', League: 'badge-league', Practice: 'badge-practice' };
+
+    tbody.innerHTML = sessions.map(s => `
+      <tr data-id="${s.session_id}"
+          data-court="${s.court_id}"
+          data-date="${s.date}"
+          data-time="${s.start_time}"
+          data-duration="${s.duration}"
+          data-gametype="${s.game_type}"
+          data-players="${esc(s.players || '')}">
+        <td><strong>${esc(s.court_name)}</strong></td>
+        <td class="font-mono text-sm">${s.date}</td>
+        <td class="font-mono text-sm">${s.start_time}</td>
+        <td class="font-mono">${s.duration} min</td>
+        <td><span class="badge ${typeClass[s.game_type] || ''}">${s.game_type}</span></td>
+        <td class="text-muted text-sm">${s.players || '—'}</td>
+        <td>
+          <div class="flex gap-2">
+            <button class="btn btn-ghost btn-sm" onclick="editSession(${s.session_id})">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteSession(${s.session_id})">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async function loadPlayers() {
+    const res = await fetch('/api/players');
+    players   = await res.json();
+    const sel = document.getElementById('session-players');
+    sel.innerHTML = players.map(p =>
+      `<option value="${p.player_id}">${esc(p.name)} (${p.skill_level})</option>`
+    ).join('');
+  }
+
+  function populateCourtDropdown() {
+    const sel = document.getElementById('session-court');
+    sel.innerHTML = courts.map(c =>
+      `<option value="${c.court_id}">${esc(c.name)} — ${esc(c.location)}</option>`
+    ).join('');
+  }
+
+  function openSessionModal() {
+    document.getElementById('session-modal-title').textContent = 'ADD SESSION';
+    document.getElementById('session-id').value       = '';
+    document.getElementById('session-date').value     = new Date().toISOString().split('T')[0];
+    document.getElementById('session-time').value     = '09:00';
+    document.getElementById('session-duration').value = '60';
+    document.getElementById('session-gametype').value = 'Pickup';
+    // Deselect all players
+    Array.from(document.getElementById('session-players').options).forEach(o => o.selected = false);
+    openModal('session-modal');
+  }
+
+  async function editSession(id) {
+    const row        = document.querySelector(`tr[data-id="${id}"]`);
+    const playerNames = (row.dataset.players || '').split(', ').filter(Boolean);
+
+    // Find player ids by matching names
+    const res      = await fetch('/api/sessions');
+    const sessions = await res.json();
+    const session  = sessions.find(s => s.session_id === id);
+
+    document.getElementById('session-modal-title').textContent = 'EDIT SESSION';
+    document.getElementById('session-id').value       = id;
+    document.getElementById('session-date').value     = row.dataset.date;
+    document.getElementById('session-time').value     = row.dataset.time;
+    document.getElementById('session-duration').value = row.dataset.duration;
+    document.getElementById('session-gametype').value = row.dataset.gametype;
+
+    // Set court
+    document.getElementById('session-court').value = row.dataset.court ||
+      courts.find(c => c.name === row.querySelector('td strong').textContent)?.court_id || '';
+
+    // Fetch this session's players
+    const spRes  = await fetch(`/api/sessions`);
+    const spData = await spRes.json();
+
+    // Match selected players by name (since we store names in the table row)
+    const selEl = document.getElementById('session-players');
+    Array.from(selEl.options).forEach(opt => {
+      opt.selected = playerNames.includes(opt.text.split(' (')[0]);
+    });
+
+    openModal('session-modal');
+  }
+
+  async function saveSession() {
+    const id         = document.getElementById('session-id').value;
+    const selOptions = document.getElementById('session-players').selectedOptions;
+    const playerIds  = Array.from(selOptions).map(o => parseInt(o.value));
+
+    const payload = {
+      court_id:   document.getElementById('session-court').value,
+      date:       document.getElementById('session-date').value,
+      start_time: document.getElementById('session-time').value,
+      duration:   document.getElementById('session-duration').value,
+      game_type:  document.getElementById('session-gametype').value,
+      player_ids: playerIds,
+    };
+
+    const url    = id ? `/api/sessions/${id}` : '/api/sessions';
+    const method = id ? 'PUT' : 'POST';
+    const res    = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const data   = await res.json();
+    if (!res.ok) { toast(data.error, 'error'); return; }
+    closeModal('session-modal');
+    toast(id ? 'Session updated!' : 'Session added!');
+    loadSessions();
+  }
+
+  async function deleteSession(id) {
+    if (!confirm('Delete this session?')) return;
+    const res = await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
+    if (res.ok) { toast('Session deleted'); loadSessions(); }
+    else toast('Delete failed', 'error');
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function esc(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // Fix tab initialization
+  document.addEventListener('DOMContentLoaded', () => {
+    const tabs   = document.querySelectorAll('#main-tabs .tab');
+    const panels = [
+      document.getElementById('panel-courts'),
+      document.getElementById('panel-sessions'),
+      document.getElementById('panel-players'),   // ADD THIS
+      ];
+      tabs.forEach((tab, i) => {
+      tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      panels.forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      panels[i].classList.add('active');
+      if (i === 2) loadPlayersTab();             // ADD THIS
+      });
+    });
+  });
+</script>
+{% endblock %}

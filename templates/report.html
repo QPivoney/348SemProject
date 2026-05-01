@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block title %}Session Report — CourtHub{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>SESSION <span>REPORT</span></h1>
+  <p>Filter sessions and view analytics across courts and players</p>
+</div>
+
+<!-- ═══════════════ FILTER PANEL ═══════════════ -->
+<div class="card mb-6">
+  <div class="card-title">🔍  FILTER OPTIONS</div>
+  <div class="form-row">
+    <div class="form-group">
+      <label>Player</label>
+      <!-- Dynamically populated from database -->
+      <select id="f-player">
+        <option value="">All Players</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Game Type</label>
+      <select id="f-gametype">
+        <option value="">All Types</option>
+        <option value="Pickup">Pickup</option>
+        <option value="League">League</option>
+        <option value="Practice">Practice</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Min Duration (min)</label>
+      <input type="number" id="f-min-dur" placeholder="e.g. 30" min="0"/>
+    </div>
+    <div class="form-group">
+      <label>Max Duration (min)</label>
+      <input type="number" id="f-max-dur" placeholder="e.g. 120" min="0"/>
+    </div>
+    <div class="form-group">
+      <label>Date From</label>
+      <input type="date" id="f-date-from"/>
+    </div>
+    <div class="form-group">
+      <label>Date To</label>
+      <input type="date" id="f-date-to"/>
+    </div>
+  </div>
+  <div class="flex gap-3" style="margin-top: 0.5rem;">
+    <button class="btn btn-primary" onclick="runReport()">Generate Report</button>
+    <button class="btn btn-ghost" onclick="resetFilters()">Reset</button>
+  </div>
+</div>
+
+<!-- ═══════════════ STATS ═══════════════ -->
+<div id="stats-section" style="display:none">
+  <div class="stat-grid" id="stat-grid"></div>
+</div>
+
+<!-- ═══════════════ RESULTS TABLE ═══════════════ -->
+<div class="card" id="results-card" style="display:none">
+  <div class="flex justify-between items-center mb-4">
+    <span class="card-title" style="margin-bottom:0">📊  RESULTS</span>
+    <span class="text-muted text-sm" id="result-count"></span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Court</th>
+          <th>Date</th>
+          <th>Start</th>
+          <th>Duration</th>
+          <th>Type</th>
+          <th>Players</th>
+          <th># Players</th>
+        </tr>
+      </thead>
+      <tbody id="report-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<div id="empty-report" class="empty-state" style="display:none">
+  <div class="icon">🔎</div>
+  <p>No sessions match your filters.</p>
+</div>
+
+<div id="pre-report" class="empty-state">
+  <div class="icon">📋</div>
+  <p>Set your filters above and click <strong>Generate Report</strong>.</p>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // load players dropdown
+  async function loadPlayers() {
+    const res     = await fetch('/api/players');
+    const players = await res.json();
+    const sel     = document.getElementById('f-player');
+    players.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value       = p.player_id;
+      opt.textContent = `${p.name} (${p.skill_level})`;
+      sel.appendChild(opt);
+    });
+  }
+
+  // ── Report ────────────────────────────────────────────────────────────────
+  async function runReport() {
+    const params = new URLSearchParams();
+    const player   = document.getElementById('f-player').value;
+    const gametype = document.getElementById('f-gametype').value;
+    const minDur   = document.getElementById('f-min-dur').value;
+    const maxDur   = document.getElementById('f-max-dur').value;
+    const dateFrom = document.getElementById('f-date-from').value;
+    const dateTo   = document.getElementById('f-date-to').value;
+
+    if (player)   params.append('player_id', player);
+    if (gametype) params.append('game_type', gametype);
+    if (minDur)   params.append('min_duration', minDur);
+    if (maxDur)   params.append('max_duration', maxDur);
+    if (dateFrom) params.append('date_from', dateFrom);
+    if (dateTo)   params.append('date_to', dateTo);
+
+    const res  = await fetch('/api/report?' + params.toString());
+    const data = await res.json();
+
+    document.getElementById('pre-report').style.display   = 'none';
+    document.getElementById('empty-report').style.display = 'none';
+    document.getElementById('results-card').style.display = 'none';
+    document.getElementById('stats-section').style.display = 'none';
+
+    if (!data.sessions.length) {
+      document.getElementById('empty-report').style.display = 'block';
+      return;
+    }
+
+    renderStats(data.stats);
+    renderTable(data.sessions);
+
+    document.getElementById('stats-section').style.display = 'block';
+    document.getElementById('results-card').style.display  = 'block';
+    document.getElementById('result-count').textContent    = `${data.sessions.length} session${data.sessions.length !== 1 ? 's' : ''} found`;
+  }
+
+  function renderStats(s) {
+    const grid = document.getElementById('stat-grid');
+    grid.innerHTML = `
+      <div class="stat-pill">
+        <div class="label">Total Sessions</div>
+        <div class="value">${s.total_sessions}</div>
+        <div class="unit">sessions</div>
+      </div>
+      <div class="stat-pill">
+        <div class="label">Avg Duration</div>
+        <div class="value">${s.avg_duration}</div>
+        <div class="unit">minutes / session</div>
+      </div>
+      <div class="stat-pill">
+        <div class="label">Total Time</div>
+        <div class="value">${Math.floor(s.total_time / 60)}<span style="font-size:1.1rem">h ${s.total_time % 60}m</span></div>
+        <div class="unit">court time used</div>
+      </div>
+      <div class="stat-pill">
+        <div class="label">Duration Range</div>
+        <div class="value" style="font-size:1.4rem">${s.min_duration}–${s.max_duration}</div>
+        <div class="unit">min (min – max)</div>
+      </div>
+      <div class="stat-pill">
+        <div class="label">Avg Players</div>
+        <div class="value">${s.avg_players}</div>
+        <div class="unit">players / session</div>
+      </div>
+    `;
+  }
+
+  function renderTable(sessions) {
+    const typeClass = { Pickup: 'badge-pickup', League: 'badge-league', Practice: 'badge-practice' };
+    document.getElementById('report-body').innerHTML = sessions.map(s => `
+      <tr>
+        <td><strong>${esc(s.court_name)}</strong></td>
+        <td class="font-mono text-sm">${s.date}</td>
+        <td class="font-mono text-sm">${s.start_time}</td>
+        <td class="font-mono">${s.duration} min</td>
+        <td><span class="badge ${typeClass[s.game_type] || ''}">${s.game_type}</span></td>
+        <td class="text-muted text-sm">${esc(s.players || '—')}</td>
+        <td class="font-mono text-orange">${s.player_count}</td>
+      </tr>
+    `).join('');
+  }
+
+  function resetFilters() {
+    ['f-player','f-gametype','f-min-dur','f-max-dur','f-date-from','f-date-to']
+      .forEach(id => document.getElementById(id).value = '');
+    document.getElementById('pre-report').style.display    = 'block';
+    document.getElementById('empty-report').style.display  = 'none';
+    document.getElementById('results-card').style.display  = 'none';
+    document.getElementById('stats-section').style.display = 'none';
+  }
+
+  function esc(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  document.addEventListener('DOMContentLoaded', loadPlayers);
+</script>
+{% endblock %}
