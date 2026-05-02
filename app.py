@@ -5,7 +5,6 @@ import os
 app = Flask(__name__)
 DB_PATH = os.path.join(os.path.dirname(__file__), 'basketball.db')
 
-
 # database extras
 
 def get_db():
@@ -14,12 +13,10 @@ def get_db():
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
-
 def init_db():
     with get_db() as conn:
         with open(os.path.join(os.path.dirname(__file__), 'schema.sql')) as f:
             conn.executescript(f.read())
-
 
 # pages
 
@@ -27,16 +24,13 @@ def init_db():
 def index():
     return redirect(url_for('courts'))
 
-
 @app.route('/courts')
 def courts():
     return render_template('courts.html')
 
-
 @app.route('/report')
 def report():
     return render_template('report.html')
-
 
 # courts
 
@@ -68,7 +62,6 @@ def api_add_court():
     except sqlite3.IntegrityError:
         return jsonify({'error': 'Court name already exists'}), 409
 
-
 @app.route('/api/courts/<int:court_id>', methods=['PUT'])
 def api_update_court(court_id):
     data = request.get_json()
@@ -99,7 +92,6 @@ def api_delete_court(court_id):
         conn.execute("COMMIT")
     return jsonify({'ok': True})
 
-
 # sessions
 
 @app.route('/api/sessions', methods=['GET'])
@@ -122,7 +114,6 @@ def api_get_sessions():
                             ORDER BY s.date DESC, s.start_time DESC
                             ''').fetchall()
     return jsonify([dict(r) for r in rows])
-
 
 @app.route('/api/sessions', methods=['POST'])
 def api_add_session():
@@ -147,7 +138,6 @@ def api_add_session():
         conn.execute("COMMIT")
     return jsonify({'session_id': sid}), 201
 
-
 @app.route('/api/sessions/<int:session_id>', methods=['PUT'])
 def api_update_session(session_id):
     data = request.get_json()
@@ -171,7 +161,6 @@ def api_update_session(session_id):
             conn.execute('INSERT INTO SessionPlayers VALUES (?, ?)', (session_id, pid))
         conn.execute("COMMIT")
     return jsonify({'ok': True})
-
 
 @app.route('/api/sessions/<int:session_id>', methods=['DELETE'])
 def api_delete_session(session_id):
@@ -212,7 +201,6 @@ def api_add_player():
     except sqlite3.IntegrityError:
         return jsonify({'error': 'Email already exists'}), 409
 
-
 @app.route('/api/players/<int:player_id>', methods=['PUT'])
 def api_update_player(player_id):
     data = request.get_json()
@@ -233,7 +221,6 @@ def api_update_player(player_id):
         return jsonify({'ok': True})
     except sqlite3.IntegrityError:
         return jsonify({'error': 'Email already exists'}), 409
-
 
 @app.route('/api/players/<int:player_id>', methods=['DELETE'])
 def api_delete_player(player_id):
