@@ -160,7 +160,7 @@ def api_update_session(session_id):
     if not all([court_id, date, start_time, duration, game_type]):
         return jsonify({'error': 'All fields are required'}), 400
     with get_db() as conn:
-        # Transaction ensures session update and player list update succeed or fail together
+        # transaction so they pass or fail together
         conn.execute("BEGIN")
         conn.execute(
             'UPDATE Sessions SET court_id=?, date=?, start_time=?, duration=?, game_type=? WHERE session_id=?',
@@ -255,7 +255,7 @@ def api_report():
     date_to = request.args.get('date_to')
     game_type = request.args.get('game_type')
 
-    # Base query using correlated subqueries to avoid duplicate rows
+    # avoids duplicate rows
     query = '''
             SELECT s.session_id, 
                    c.name AS court_name, 
